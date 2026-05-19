@@ -4,401 +4,174 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
-<title>MoneyVision AI</title>
+<title>AI Deteksi Uang</title>
 
+<!-- ONNX Runtime -->
 <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
 <style>
-
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-}
-
-body{
-    font-family:'Poppins',sans-serif;
-    background:#0b1220;
-    color:white;
-    min-height:100vh;
-    overflow-x:hidden;
-}
-
-/* Background Glow */
-
-.bg-glow{
-    position:fixed;
-    width:600px;
-    height:600px;
-    border-radius:50%;
-    background:rgba(0,255,170,0.12);
-    filter:blur(120px);
-    top:-200px;
-    left:-150px;
-    z-index:-1;
-}
-
-.bg-glow2{
-    position:fixed;
-    width:500px;
-    height:500px;
-    border-radius:50%;
-    background:rgba(0,140,255,0.12);
-    filter:blur(120px);
-    bottom:-200px;
-    right:-150px;
-    z-index:-1;
-}
-
-/* Header */
-
-.header{
-    width:100%;
-    padding:20px 40px;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    backdrop-filter:blur(12px);
-    border-bottom:1px solid rgba(255,255,255,0.08);
-}
-
-.logo{
-    display:flex;
-    align-items:center;
-    gap:12px;
-}
-
-.logo-icon{
-    width:45px;
-    height:45px;
-    border-radius:14px;
-    background:linear-gradient(135deg,#00ff99,#00bfff);
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    font-size:1.3rem;
-    font-weight:bold;
-    color:#001b14;
-}
-
-.logo-text h1{
-    font-size:1.2rem;
-    font-weight:700;
-}
-
-.logo-text p{
-    font-size:0.8rem;
-    color:#94a3b8;
-}
-
-/* Layout */
-
-.main{
-    width:100%;
-    padding:30px;
-    display:grid;
-    grid-template-columns:320px 1fr;
-    gap:25px;
-}
-
-/* Sidebar */
-
-.sidebar{
-    background:rgba(15,23,42,0.75);
-    border:1px solid rgba(255,255,255,0.08);
-    border-radius:28px;
-    padding:25px;
-    backdrop-filter:blur(18px);
-    height:fit-content;
-    box-shadow:0 10px 40px rgba(0,0,0,0.35);
-}
-
-.sidebar h2{
-    margin-bottom:20px;
-    font-size:1.2rem;
-}
-
-.card{
-    background:rgba(255,255,255,0.04);
-    border:1px solid rgba(255,255,255,0.05);
-    border-radius:20px;
-    padding:18px;
-    margin-bottom:18px;
-}
-
-.card-title{
-    font-size:0.9rem;
-    color:#94a3b8;
-    margin-bottom:8px;
-}
-
-.card-value{
-    font-size:1.2rem;
-    font-weight:600;
-}
-
-/* Button */
-
-.btn{
-    width:100%;
-    padding:15px;
-    border:none;
-    border-radius:18px;
-    background:linear-gradient(135deg,#00ff99,#00bfff);
-    color:#001b14;
-    font-size:1rem;
-    font-weight:700;
-    cursor:pointer;
-    transition:0.3s;
-}
-
-.btn:hover{
-    transform:translateY(-2px);
-    box-shadow:0 10px 25px rgba(0,255,170,0.3);
-}
-
-/* Camera Area */
-
-.viewer{
-    position:relative;
-    border-radius:30px;
-    overflow:hidden;
-    background:black;
-    border:1px solid rgba(255,255,255,0.08);
-    min-height:720px;
-    box-shadow:0 20px 60px rgba(0,0,0,0.4);
-}
-
-video,
-canvas{
-    position:absolute;
-    width:100%;
-    height:100%;
-    top:0;
-    left:0;
-    object-fit:cover;
-}
-
-/* HUD */
-
-.hud-top{
-    position:absolute;
-    top:20px;
-    left:20px;
-    right:20px;
-    display:flex;
-    justify-content:space-between;
-    z-index:50;
-}
-
-.hud-badge{
-    background:rgba(0,0,0,0.45);
-    border:1px solid rgba(255,255,255,0.1);
-    backdrop-filter:blur(10px);
-    padding:12px 18px;
-    border-radius:18px;
-    font-size:0.9rem;
-}
-
-.ai-live{
-    color:#00ff99;
-    font-weight:600;
-}
-
-/* Bottom Detection */
-
-.detect-panel{
-    position:absolute;
-    bottom:20px;
-    left:20px;
-    right:20px;
-    z-index:50;
-
-    background:rgba(0,0,0,0.45);
-    border:1px solid rgba(255,255,255,0.08);
-    backdrop-filter:blur(12px);
-
-    border-radius:24px;
-    padding:22px;
-}
-
-.detect-label{
-    color:#94a3b8;
-    margin-bottom:8px;
-}
-
-.detect-result{
-    font-size:2rem;
-    font-weight:700;
-}
-
-.detect-confidence{
-    margin-top:8px;
-    color:#00ff99;
-}
-
-/* Scanning Animation */
-
-.scan-line{
-    position:absolute;
-    width:100%;
-    height:4px;
-    background:linear-gradient(to right,transparent,#00ff99,transparent);
-    z-index:40;
-    animation:scan 3s linear infinite;
-    box-shadow:0 0 25px #00ff99;
-}
-
-@keyframes scan{
-    0%{
-        top:0%;
-    }
-    100%{
-        top:100%;
-    }
-}
-
-/* Responsive */
-
-@media(max-width:950px){
-
-    .main{
-        grid-template-columns:1fr;
+    *{
+        margin:0;
+        padding:0;
+        box-sizing:border-box;
     }
 
-    .viewer{
-        min-height:500px;
+    body{
+        background:#0f172a;
+        color:white;
+        font-family:Arial, Helvetica, sans-serif;
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        min-height:100vh;
+        padding:20px;
     }
 
-}
+    h1{
+        margin-bottom:10px;
+        text-align:center;
+        font-size:2rem;
+    }
 
+    .subtitle{
+        color:#94a3b8;
+        margin-bottom:20px;
+    }
+
+    .dashboard{
+        display:flex;
+        gap:15px;
+        margin-bottom:20px;
+        flex-wrap:wrap;
+        justify-content:center;
+    }
+
+    .card{
+        background:#1e293b;
+        padding:12px 18px;
+        border-radius:12px;
+        border:1px solid #334155;
+        min-width:160px;
+        text-align:center;
+    }
+
+    .card h3{
+        font-size:0.9rem;
+        color:#94a3b8;
+        margin-bottom:5px;
+    }
+
+    .card p{
+        font-size:1rem;
+        font-weight:bold;
+    }
+
+    .btn-start{
+        padding:14px 28px;
+        border:none;
+        border-radius:12px;
+        background:#22c55e;
+        color:white;
+        font-size:1rem;
+        font-weight:bold;
+        cursor:pointer;
+        transition:0.3s;
+        margin-bottom:20px;
+    }
+
+    .btn-start:hover{
+        background:#16a34a;
+        transform:scale(1.03);
+    }
+
+    .container{
+        position:relative;
+        width:100%;
+        max-width:900px;
+        aspect-ratio:4/3;
+        border-radius:20px;
+        overflow:hidden;
+        border:2px solid #334155;
+        box-shadow:0 0 30px rgba(0,0,0,0.5);
+        background:black;
+    }
+
+    video,
+    canvas{
+        position:absolute;
+        width:100%;
+        height:100%;
+        top:0;
+        left:0;
+        object-fit:cover;
+    }
+
+    #overlay{
+        z-index:10;
+        pointer-events:none;
+    }
+
+    .footer{
+        margin-top:20px;
+        color:#64748b;
+        font-size:0.9rem;
+        text-align:center;
+    }
+
+    @media(max-width:768px){
+        h1{
+            font-size:1.5rem;
+        }
+
+        .card{
+            min-width:130px;
+        }
+    }
 </style>
 </head>
 
 <body>
 
-<div class="bg-glow"></div>
-<div class="bg-glow2"></div>
+<h1>🛡️ AI Deteksi Jenis Bentuk Uang</h1>
+<p class="subtitle">Dibuat oleh: Sahrul Hilmawan</p>
 
-<!-- HEADER -->
+<div class="dashboard">
 
-<header class="header">
-
-    <div class="logo">
-
-        <div class="logo-icon">
-            AI
-        </div>
-
-        <div class="logo-text">
-            <h1>MoneyVision AI</h1>
-            <p>Realtime Currency Detection System</p>
-        </div>
-
+    <div class="card">
+        <h3>Status AI</h3>
+        <p id="status">MATI</p>
     </div>
 
-</header>
+    <div class="card">
+        <h3>FPS</h3>
+        <p id="fps">0</p>
+    </div>
 
-<!-- MAIN -->
-
-<div class="main">
-
-    <!-- SIDEBAR -->
-
-    <aside class="sidebar">
-
-        <h2>Dashboard AI</h2>
-
-        <div class="card">
-            <div class="card-title">Status Sistem</div>
-            <div class="card-value" id="status">
-                OFFLINE
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-title">FPS Realtime</div>
-            <div class="card-value" id="fps">
-                0 FPS
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-title">Model AI</div>
-            <div class="card-value">
-                YOLO ONNX
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="card-title">Deteksi Terakhir</div>
-            <div class="card-value" id="lastDetect">
-                -
-            </div>
-        </div>
-
-        <button class="btn" id="startBtn">
-            AKTIFKAN AI
-        </button>
-
-    </aside>
-
-    <!-- VIEWER -->
-
-    <section class="viewer">
-
-        <video
-            id="webcam"
-            autoplay
-            muted
-            playsinline>
-        </video>
-
-        <canvas id="overlay"></canvas>
-
-        <div class="scan-line"></div>
-
-        <!-- HUD -->
-
-        <div class="hud-top">
-
-            <div class="hud-badge">
-                🟢 <span class="ai-live">AI ACTIVE</span>
-            </div>
-
-            <div class="hud-badge">
-                MoneyVision v1.0
-            </div>
-
-        </div>
-
-        <!-- Detection Panel -->
-
-        <div class="detect-panel">
-
-            <div class="detect-label">
-                Hasil Deteksi
-            </div>
-
-            <div class="detect-result" id="resultText">
-                Menunggu Kamera...
-            </div>
-
-            <div class="detect-confidence" id="confidenceText">
-                Confidence: 0%
-            </div>
-
-        </div>
-
-    </section>
+    <div class="card">
+        <h3>Deteksi</h3>
+        <p id="detection">-</p>
+    </div>
 
 </div>
 
-<!-- Hidden Canvas -->
+<button id="btn-init" class="btn-start">
+    AKTIFKAN KAMERA
+</button>
 
+<div class="container">
+
+    <video
+        id="webcam"
+        autoplay
+        muted
+        playsinline>
+    </video>
+
+    <canvas id="overlay"></canvas>
+
+</div>
+
+<!-- Hidden processor -->
 <canvas
     id="processor"
     width="640"
@@ -409,97 +182,133 @@ canvas{
 <script>
 
 const video = document.getElementById("webcam");
-const overlay = document.getElementById("overlay");
-const ctx = overlay.getContext("2d");
+const canvas = document.getElementById("overlay");
+const ctx = canvas.getContext("2d");
 
 const statusText = document.getElementById("status");
 const fpsText = document.getElementById("fps");
-const resultText = document.getElementById("resultText");
-const confidenceText = document.getElementById("confidenceText");
-const lastDetect = document.getElementById("lastDetect");
+const detectionText = document.getElementById("detection");
 
-const startBtn = document.getElementById("startBtn");
+const button = document.getElementById("btn-init");
 
+let model = null;
 let lastTime = performance.now();
 
-async function startAI(){
+async function initCamera(){
 
     try{
 
-        statusText.innerText = "STARTING...";
+        statusText.innerText = "Mengaktifkan Kamera...";
 
         const stream = await navigator.mediaDevices.getUserMedia({
-
             video:{
                 facingMode:"environment",
                 width:{ideal:1280},
                 height:{ideal:720}
             },
-
             audio:false
-
         });
 
         video.srcObject = stream;
 
         await video.play();
 
-        overlay.width = video.videoWidth;
-        overlay.height = video.videoHeight;
+        resizeCanvas();
 
-        statusText.innerText = "ONLINE";
+        statusText.innerText = "Kamera Aktif";
 
-        detectLoop();
+        loadModel();
 
     }catch(error){
 
         console.error(error);
 
-        statusText.innerText = "ERROR";
-
-        alert("Kamera gagal diakses");
+        statusText.innerText = "Kamera Gagal";
+        alert("Tidak bisa mengakses kamera.");
 
     }
 
 }
 
-function detectLoop(){
+function resizeCanvas(){
 
-    ctx.clearRect(0,0,overlay.width,overlay.height);
-
-    drawProfessionalBox();
-
-    updateFPS();
-
-    requestAnimationFrame(detectLoop);
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
 
 }
 
-function drawProfessionalBox(){
+window.addEventListener("resize", resizeCanvas);
 
-    const x = overlay.width/2 - 140;
-    const y = overlay.height/2 - 100;
-    const w = 280;
-    const h = 200;
+async function loadModel(){
 
-    ctx.strokeStyle = "#00ff99";
+    try{
+
+        statusText.innerText = "Loading Model AI...";
+
+        /*
+        GANTI model.onnx
+        dengan nama model AI kalian
+        */
+
+        model = await ort.InferenceSession.create("model.onnx");
+
+        statusText.innerText = "AI Siap";
+
+        detectFrame();
+
+    }catch(error){
+
+        console.error(error);
+
+        statusText.innerText = "Model Gagal Dimuat";
+
+    }
+
+}
+
+async function detectFrame(){
+
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    /*
+    ===========================
+    TEMPAT PROSES AI
+    ===========================
+    Di sini nanti preprocessing,
+    inference ONNX,
+    dan drawing box
+    */
+
+    drawDemoBox();
+
+    updateFPS();
+
+    requestAnimationFrame(detectFrame);
+
+}
+
+function drawDemoBox(){
+
+    ctx.strokeStyle = "#00ff88";
     ctx.lineWidth = 4;
 
-    ctx.shadowColor = "#00ff99";
-    ctx.shadowBlur = 20;
+    ctx.strokeRect(
+        canvas.width/2 - 100,
+        canvas.height/2 - 80,
+        200,
+        160
+    );
 
-    ctx.strokeRect(x,y,w,h);
+    ctx.fillStyle = "#00ff88";
+    ctx.font = "20px Arial";
 
-    ctx.fillStyle = "#00ff99";
+    ctx.fillText(
+        "Uang Terdeteksi",
+        canvas.width/2 - 90,
+        canvas.height/2 - 90
+    );
 
-    ctx.font = "bold 24px Poppins";
-
-    ctx.fillText("Rp 50.000",x,y-18);
-
-    resultText.innerText = "Rp 50.000";
-    confidenceText.innerText = "Confidence: 98.4%";
-    lastDetect.innerText = "Rp 50.000";
-
+    detectionText.innerText = "Uang";
 }
 
 function updateFPS(){
@@ -510,11 +319,11 @@ function updateFPS(){
 
     lastTime = now;
 
-    fpsText.innerText = fps + " FPS";
+    fpsText.innerText = fps;
 
 }
 
-startBtn.addEventListener("click",startAI);
+button.addEventListener("click", initCamera);
 
 </script>
 
