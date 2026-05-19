@@ -1,1 +1,2 @@
 # pendeteksi-jenis-uang
+MoneyVision AI adalah aplikasi kecerdasan buatan berbasis browser yang dirancang untuk mendeteksi dan membedakan uang kertas serta uang koin secara realtime menggunakan kamera perangkat. Sistem ini menggunakan model YOLO ONNX dengan teknologi ONNX Runtime Web dan GPU acceleration WebGL agar proses deteksi berjalan cepat, stabil, dan ringan langsung di browser tanpa memerlukan instalasi aplikasi tambahan.
