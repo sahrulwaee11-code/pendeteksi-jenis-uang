@@ -16,10 +16,6 @@ const CONFIG = {
     // Batas untuk menghapus kotak deteksi yang menumpuk (Biarkan saja 0.4)
     iouThreshold: 0.4,
 
-    stableConfidence: 0.80,
-
-    stableFrames: 7,
-
 };
 
 // ======================================================================
